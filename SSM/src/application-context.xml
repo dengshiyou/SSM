@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+						http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+						http://www.springframework.org/schema/tx 
+ 						http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+						http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-3.0.xsd	
+						http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd
+						http://www.springframework.org/schema/aop 
+ 						http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
+						">
+						
+						
+<!-- 扫描所有的包 -->
+	<context:component-scan base-package="com" />
+	
+<!-- 声明自动为spring容器中那些配置@aspectJ切面的bean创建代理，织入切面。 -->	
+	<aop:aspectj-autoproxy/>
+	
+<!-- 注解驱动，替换处理器映射器，处理器适配器 -->
+	<mvc:annotation-driven/>
+	
+<!--配置静态资源，直接映射到对应的文件夹，不被DispatcherServlet处理，3.04新增功能，需要重新设置spring-mvc-3.0.xsd-->
+<!-- 	<mvc:resources mapping="/js/**" location="${sys.application.js.path}/" cache-period="259200"/> -->
+	
+<!-- 配置全局属性-->
+	<bean id="propertyConfigurer"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="locations">
+		<!--加载属性文件  -->
+			<list>
+				<value>classpath:jdbc.properties</value>
+				<value>classpath:sys-constants.properties</value>
+			</list>
+		</property>
+	</bean>
+<!-- 视图解析器 -->
+	<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<!-- 这里的配置我的理解是自动给后面action的方法return的字符串加上前缀和后缀，变成一个 可用的url地址 -->
+		<property name="viewClass" value="org.springframework.web.servlet.view.JstlView" />
+		<property name="prefix" value="/" />
+		<property name="suffix" value=".jsp" />
+		<property name="attributesMap">
+			<!--配置全局静态路径  jsp页面需要用到的常量-->
+			<map>
+				<entry key="jsPath" value="${sys.application.js.path}"></entry>
+				<entry key="webUrl" value="${sys.application.url}"></entry>
+			</map>
+		</property>
+	</bean>						
+<!-- 定义配置数据源 -->
+ 	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"   destroy-method="close">  
+        <property name="driverClassName" value="${driver}" />  
+        <property name="url" value="${url}" />  
+        <property name="username" value="${username}" />  
+        <property name="password" value="${password}" />  
+        <!-- 初始化连接大小 -->  
+   		<property name="initialSize" value="${initialSize}"></property>   
+        <!-- 连接池最大数量 -->  
+        <property name="maxActive" value="${maxActive}"></property>  
+        <!-- 连接池最大空闲 -->  
+        <property name="maxIdle" value="${maxIdle}"></property>  
+        <!-- 连接池最小空闲 -->  
+        <property name="minIdle" value="${minIdle}"></property>  
+        <!-- 获取连接最大等待时间 -->  
+        <property name="maxWait" value="${maxWait}"></property>  
+     </bean>
+     
+<!-- spring与mybatis完美结合，不需要mybatis的配置文件映射 -->
+	 <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+	 	<!-- 连接数据源 -->
+	 	<property name="dataSource" ref="dataSource"></property>
+	 	<!-- 加载mybatis的配置文件 -->
+	 	<property name="configLocation" value="classpath:sqlMapConfig.xml"></property>
+	 	<!--自动扫描mapping.xml文件,这个步骤已经在sqlMapConfig.xml中加载了-->
+	 	<!-- <property name="mapperLocations" value="classpath:com/mybatis/*.xml"></property>  -->
+	 </bean>
+	 
+<!-- mybatis的mapper.xml的文件扫描加载，同事将mapper的接口纳入spring的容器中，bean的name 为首字母小写接口名-->
+	 <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+	 <!-- 指定扫描的报名 如果扫描多个包， 每个包中间使用半角逗号分隔 -->
+	 	<property name="basePackage" value="com.dao"/>
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
+	 </bean>
+	
+<!-- 事务管理器  ———————
+	 打了这个注解的类或者方法表示该类里面的所有方法或者这个方法的事务由spring处理，来保证事务的原子性，
+	 如果失败则spring负责回滚操作，成功提交操作.保证数据的一致性，与@Transactional-->
+	 
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource"/>
+	</bean>
+	 
+	<!-- 配置事务的通知() -->
+	<tx:advice id="txAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<!-- 方法对应的传播属性  -->
+			<tx:method name="save*" propagation="REQUIRES_NEW"/>
+			<tx:method name="delete*" propagation="REQUIRED"/>
+			<tx:method name="insert*" propagation="REQUIRED" rollback-for="Exception"/>
+			<tx:method name="add*" propagation="REQUIRED" rollback-for="Exception"/>
+			<tx:method name="update*" propagation="REQUIRED"/>
+			
+			<!-- 只读事务 -->
+			<tx:method name="find*" propagation="SUPPORTS" read-only="true"/>
+			<tx:method name="select*" propagation="SUPPORTS" read-only="true"/>
+			<tx:method name="get*" propagation="REQUIRED" read-only="true"/>
+			<tx:method name="count*" propagation="REQUIRED" read-only="true"/>
+			<tx:method name="find*" propagation="REQUIRED" read-only="true"/>
+			<tx:method name="page*" propagation="REQUIRED" read-only="true"/>
+			<tx:method name="query*" propagation="REQUIRED" read-only="true"/>
+			<tx:method name="load*" propagation="REQUIRED" read-only="true"/>
+			<tx:method name="search*" propagation="REQUIRED" read-only="true"/>
+			<tx:method name="is*" propagation="REQUIRED" read-only="true"/>
+		</tx:attributes>
+	</tx:advice>
+
+<!-- 配置切面 -->
+	<aop:config >
+			<!-- <aop:pointcut id="daoMethod" expression="execution(* com.serviceimpl.*.*(..))"/>
+   			<aop:advisor pointcut-ref="daoMethod" advice-ref="txAdvice"/> -->
+ 		<aop:advisor advice-ref="txAdvice" pointcut="execution(* com.service..*.*(..))"/>
+	</aop:config>
+	
+</beans>
+
+

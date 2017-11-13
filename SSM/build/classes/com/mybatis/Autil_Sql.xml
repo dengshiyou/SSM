@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="autil">      
+   <!--  分页 
+   <sql id="pageLeft">
+   	select k1.* from (select k.*,rownum rid  from (
+   </sql>
+   <sql id="pageRight">
+   		 ) k) k1 where k1.rid > #pageInfo.startIndex# and  k1.rid <![CDATA[<=]]>#pageInfo.pageSize#
+   </sql> -->
+   
+   <!-- 字符串数据库连接 --> 
+  <!--  <sql id="strQueryLeft">
+   		'%' || 
+   </sql>
+   <sql id="strQueryRight">
+   		|| '%'
+   </sql> -->
+   
+</mapper>

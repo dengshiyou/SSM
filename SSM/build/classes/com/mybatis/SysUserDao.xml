@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dao.SysUserDao">
+	
+	<sql id="getQuerySql">
+   		select 
+			user_id userId,
+			login_name loginName,
+	 		pass_word passWord,
+			user_no userNo,
+			name name,
+	 		email email,
+			phone phone,
+			user_type userType
+		from sys_user
+    </sql>
+	<select id="doFindUser" resultType="SysUser">
+		 <include refid="getQuerySql"/>
+		where login_name = #{loginName} and pass_word = #{passWord}
+	</select>
+	
+	<select id="doFindUsersList" resultType="SysUser">
+		 <include refid="getQuerySql"/>
+		 where
+		 <if test="loginName != null and loginName!= ''">
+		 	login_name like CONCAT('%',#{loginName},'%')
+		 </if>
+	</select>
+	<insert id="insertBO" parameterType="SysUser" useGeneratedKeys="true" keyProperty="id">
+		insert into SYS_USER(user_id,login_name,pass_word,user_no) values(#{userId},#{loginName},#{passWord},#{userNo})
+	</insert>
+</mapper>
