@@ -26,8 +26,10 @@ var dWidth = 900;
 // 初始化
 $(document).ready(function()
 {
-	openProgress(); // 打开进度条
-	initColTables();
+	openProgress();
+	
+	
+	
 	closeProgress(); // 关闭进度条
 });
 
