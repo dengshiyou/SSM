@@ -27,7 +27,7 @@ function initUptData()
 	oid = "${bo.oid}";
 	if (isOptEdit(oid))
 	{
-		// 修改
+		
 		 
 	}
 }	
