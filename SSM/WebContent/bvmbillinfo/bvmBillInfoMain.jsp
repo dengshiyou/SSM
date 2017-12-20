@@ -34,7 +34,7 @@ function doSearch()
 </body>
 
 <span style="display:none;">
-     <input  type="button"  class="search_btn" value="查询" style="margin-left:5px;" onClick="doSearch()" />
+     <input  type="button"  class="search_btn" value="查找" style="margin-left:5px;" onClick="doSearch()" />
 </span>
 
 </html>
